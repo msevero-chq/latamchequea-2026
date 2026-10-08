@@ -17,6 +17,7 @@
  *             Defecto: "organizacion". Un filtro con menos de 2 opciones no se muestra.
  *   columnas  Máximo de columnas en pantallas anchas: 3, 4 (defecto) o 5.
  *   orden     "planilla" (defecto: columna "orden" o el orden de las filas) o "alfabetico".
+ *             "alfabetico" ordena por la columna "apellido" si existe; si no, por "nombre".
  *   titulo    Texto opcional arriba del buscador.
  *   fuente    "sitio" para usar la tipografía de la página en lugar de Archivo.
  *
@@ -122,6 +123,7 @@
   // Encabezados aceptados para cada campo (sin tildes, en minúscula).
   const ALIAS = {
     nombre: ['nombre', 'nombre y apellido', 'participante', 'name', 'full name', 'nome', 'nome completo'],
+    apellido: ['apellido', 'apellidos', 'surname', 'last name', 'sobrenome'],
     organizacion: ['organizacion', 'org', 'medio', 'institucion', 'empresa', 'organization', 'organisation', 'organizacao', 'instituicao', 'veiculo'],
     cargo: ['cargo', 'rol', 'puesto', 'role', 'position', 'title', 'funcao'],
     foto: ['foto', 'imagen', 'foto url', 'url foto', 'photo', 'image', 'picture', 'imagem'],
@@ -151,6 +153,7 @@
     return rows.slice(1)
       .map((r, i) => ({
         nombre: get(r, 'nombre'),
+        apellido: get(r, 'apellido'),
         organizacion: get(r, 'organizacion'),
         cargo: get(r, 'cargo'),
         foto: get(r, 'foto'),
@@ -367,7 +370,8 @@ button.cab:hover .chev{background:var(--lp-soft)}
         const people = rowsToPeople(rows, filtros);
         const locale = this.lang === 'en' ? 'en' : this.lang === 'pt' ? 'pt' : 'es';
         if ((this.getAttribute('orden') || '') === 'alfabetico') {
-          people.sort((a, b) => a.nombre.localeCompare(b.nombre, locale));
+          const clave = (p) => p.apellido ? `${p.apellido} ${p.nombre}` : p.nombre;
+          people.sort((a, b) => clave(a).localeCompare(clave(b), locale, { sensitivity: 'base' }));
         } else {
           people.sort((a, b) => {
             const ao = isNaN(a.orden) ? Infinity : a.orden, bo = isNaN(b.orden) ? Infinity : b.orden;
