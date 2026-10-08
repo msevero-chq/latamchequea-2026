@@ -520,6 +520,41 @@ button.cab:hover .chev{background:var(--lp-soft)}
       if (!list.length) {
         this.vacio.innerHTML = `${esc(t.vacio(this.q.trim()))} <button type="button" class="limpiar">${esc(t.limpiar)}</button>`;
       }
+      this.igualarAlturas();
+    }
+
+    /*
+     * Todas las tarjetas de una fila toman la altura de la más alta.
+     * Se iguala solo la cabecera (foto + nombre), así abrir una bio no estira a las vecinas.
+     */
+    igualarAlturas() {
+      if (!this.grid) return;
+      const cabs = [...this.grid.querySelectorAll('.card > .cab')];
+      cabs.forEach((c) => { c.style.minHeight = ''; });
+      const filas = new Map();
+      cabs.forEach((c) => {
+        const top = Math.round(c.parentElement.offsetTop);
+        if (!filas.has(top)) filas.set(top, []);
+        filas.get(top).push(c);
+      });
+      filas.forEach((fila) => {
+        if (fila.length < 2) return;
+        const max = Math.max(...fila.map((c) => c.offsetHeight));
+        fila.forEach((c) => { c.style.minHeight = max + 'px'; });
+      });
+      // Volver a medir cuando cambia el ancho (giro del celular, ventana) o cargan las fuentes
+      if (!this._ro) {
+        let ancho = 0, raf;
+        this._ro = new ResizeObserver((entries) => {
+          const w = Math.round(entries[0].contentRect.width);
+          if (w === ancho) return;
+          ancho = w;
+          cancelAnimationFrame(raf);
+          raf = requestAnimationFrame(() => this.igualarAlturas());
+        });
+        this._ro.observe(this);
+        document.fonts?.ready.then(() => this.igualarAlturas());
+      }
     }
   }
 
